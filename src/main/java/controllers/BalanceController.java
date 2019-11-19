@@ -2,12 +2,14 @@ package controllers;
 
 import entities.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.GenericXmlApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import repositories.Transaction;
 import repositories.UserRepository;
 import synchronizers.UserLocks;
 
@@ -21,12 +23,21 @@ public class BalanceController {
     private UserRepository userRepository;
     @Autowired
     private EntityManagerFactory emf;
-//    @Autowired
-//    private UserLocks userSynchronizer;
+    GenericXmlApplicationContext factory;
 
-    private ReentrantLock transactionLock = new ReentrantLock();
+    private ReentrantLock transactionLock;
 
-
+    public BalanceController(){
+        factory = new GenericXmlApplicationContext();
+        factory.load("Beans.xml");
+        factory.refresh();
+        transactionLock = new ReentrantLock();
+    }
+    @RequestMapping("myTransaction")
+    public ResponseEntity myTransaction(){
+        Transaction trans = (Transaction) factory.getBean("myTransaction");
+        return transferBalance(trans.getFrom(), trans.getTo(), trans.getAmount());
+    }
     @RequestMapping("users/{id}/addbalance/{amount}")
     public ResponseEntity addBalance(@PathVariable Long id, @PathVariable int amount) {
         User user = userRepository.getOne(id);

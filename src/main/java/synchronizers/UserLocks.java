@@ -11,10 +11,11 @@ public class UserLocks {
     //lock for users, whose transaction is ongoing
     private Map<Long, ReentrantLock> locks;
     private ReentrantLock mapLock;
-
+    private ReentrantLock transactionLock;
     public UserLocks() {
         locks = new TreeMap<Long, ReentrantLock>();
         mapLock = new ReentrantLock();
+        transactionLock = new ReentrantLock();
     }
 
     public void lockUser(long userId) {
@@ -30,6 +31,17 @@ public class UserLocks {
             lock.lock();
         }
     }
+//    public void lockTwoUsers(long user1, long user2){
+//        mapLock.lock();
+//        ReentrantLock lock = new ReentrantLock();
+//        locks.put(user1, lock);
+//        locks.put(user2, lock);
+//        mapLock.unlock();
+//        lock.lock();
+//    }
+//    public void unlockTwoUsers(long user1, long user2){
+//
+//    }
 
     public void unlockUser(long userId) {
         mapLock.lock();

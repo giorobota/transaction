@@ -13,6 +13,7 @@ import synchronizers.UserLocks;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import java.util.concurrent.locks.ReentrantLock;
 
 @RestController
 public class BalanceController {
@@ -20,8 +21,10 @@ public class BalanceController {
     private UserRepository userRepository;
     @Autowired
     private EntityManagerFactory emf;
-    @Autowired
-    private UserLocks userSynchronizer;
+//    @Autowired
+//    private UserLocks userSynchronizer;
+
+    private ReentrantLock transactionLock = new ReentrantLock();
 
 
     @RequestMapping("users/{id}/addbalance/{amount}")
@@ -29,13 +32,13 @@ public class BalanceController {
         User user = userRepository.getOne(id);
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        userSynchronizer.lockUser(id);
+        transactionLock.lock();
         int balance = user.getBalance() + amount;
         user.setBalance(balance);
         userRepository.save(user);
         em.getTransaction().commit();
         em.close();
-        userSynchronizer.unlockUser(id);
+        transactionLock.unlock();
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -46,13 +49,13 @@ public class BalanceController {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
-            userSynchronizer.lockUser(fromId);
+            transactionLock.lock();
             User from = userRepository.getOne(fromId);
             int balance = from.getBalance();
             if (balance < amount) {
                 throw new RuntimeException("insufficient balance");
             }
-            userSynchronizer.lockUser(toId);
+
             User to = userRepository.getOne(toId);
             from.setBalance(balance - amount);
             to.setBalance(to.getBalance() + amount);
@@ -65,8 +68,7 @@ public class BalanceController {
             status = new ResponseEntity(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
         } finally{
             em.close();
-            userSynchronizer.unlockUser(fromId);
-            userSynchronizer.unlockUser(toId);
+            transactionLock.unlock();
         }
         return status;
     }

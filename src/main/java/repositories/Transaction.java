@@ -4,7 +4,7 @@ public class Transaction {
     private long from;
     private long to;
     private int amount;
-
+    
     public Transaction(long from, long to, int amount) {
         this.from = from;
         this.to = to;

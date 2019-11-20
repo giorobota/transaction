@@ -17,16 +17,7 @@ public class User {
     private String lastName;
     @Column(table = "balances")
     private int balance;
-    @JsonIgnore
-    private ReentrantLock mutex;
 
-    public ReentrantLock getMutex() {
-        return mutex;
-    }
-
-    public void setMutex(ReentrantLock mutex) {
-        this.mutex = mutex;
-    }
 
     public int getBalance() {
         return balance;
